@@ -66,6 +66,12 @@ public class Ejercicio26 {
 		System.out.println(matriculas.size() + " matriculas");		
 	}
 
+	/**
+	 * Compara ambos parametros y devuelve true o false si coinciden
+	 * @param notaSolicitada
+	 * @param calificacion
+	 * @return boolean Con el resultado de la comparación
+	 */
 	private static boolean comprobarCalificacion(int notaSolicitada, String calificacion) {
 
 		if (calificacion.equals("suspenso") && notaSolicitada < 5) {

@@ -53,6 +53,10 @@ public class Ejercicio24 {
 
 	}
 
+	/**
+	 * Según el int que se proporciona se devuelve un syso distinto
+	 * @param sc
+	 */
 	private static void mostrarPremios(Scanner sc) {
 
 		int premioElegido = 0;

@@ -11,6 +11,11 @@ public class Ejercicio34 {
 		System.out.println("Factorial de " + numero + ": " + calcularFactorial(numero));
 	}
 
+	/**
+	 * Método recursivo que utiliza una condición ternaria para calcular el factorial de numero
+	 * @param numero
+	 * @return long Factorial del numero proporcionado
+	 */
 	private static long calcularFactorial(int numero) {
 
 		return (numero <= 1) ? numero : numero * calcularFactorial(numero - 1);

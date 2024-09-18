@@ -32,6 +32,11 @@ public class Ejercicio33 {
 		System.out.println("Resultado final: " + sumaDePares(maximo));
 	}
 
+	/**
+	 * Devuelve la suma de los números pares hasta el máximo especificado
+	 * @param maximo
+	 * @return int Suma de números pares
+	 */
 	private static int sumaDePares(int maximo) {
 		
 		int resto = 0;

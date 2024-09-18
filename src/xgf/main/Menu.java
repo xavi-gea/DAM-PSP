@@ -3,8 +3,15 @@ package xgf.main;
 import java.util.Scanner;
 import xgf.ejercicios.*;
 
+/**
+ * Se encarga de contener el método que muestra el menú
+ */
 public class Menu {
 	
+	/**
+	 * Se encarga demostrar el menú
+	 * @return void Muestra los ejercicios hechos y ejecuta las distintas clases dependiendo de la opción elegida
+	 */
 	public static void mostrarMenu () {
 		
 		boolean salir = false;

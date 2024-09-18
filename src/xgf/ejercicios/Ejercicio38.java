@@ -30,6 +30,11 @@ public class Ejercicio38 {
 		System.out.println("Para calcular los números primos se han tardado " + (tiempoAlTerminar - tiempoAlEmpezar) + " milisegundos");
 	}
 
+	/**
+	 * Devuelve un string indicando si el número proporcionado es primo.
+	 * @param numero
+	 * @return String Devuelve "es primo" o "no es primo"
+	 */
 	private static String esPrimo(int numero) {
 
 		if (numero < 2 || numero == 4) {

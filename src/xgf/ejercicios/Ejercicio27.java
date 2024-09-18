@@ -43,6 +43,11 @@ public class Ejercicio27 {
 		}
 	}
 
+	/**
+	 * Devuelve la letra a la que corresponde el numeroDNI pasado
+	 * @param numeroDNI DNI sin letra
+	 * @return String Letra correspondiente
+	 */
 	private static String calcularLetraDNI(int numeroDNI) {
 		
 		int resto = numeroDNI % 23;

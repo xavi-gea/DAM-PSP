@@ -27,6 +27,12 @@ public class Ejercicio25 {
 		}
 	}
 
+	/**
+	 * Pide un número entre 1 y 10 y lo devuelve
+	 * @param sc
+	 * @param orden Número utilizado en syso
+	 * @return int Número introducido por el usuario
+	 */
 	private static int pedirNumero(Scanner sc, int orden) {
 
 		int numero = 0;
@@ -61,7 +67,11 @@ public class Ejercicio25 {
 
 		return numero;
 	}
-
+	
+	/**
+	 * Según el int que se proporciona se devuelve un syso distinto
+	 * @param sc
+	 */
 	private static void mostrarPremios(Scanner sc) {
 
 		int premioElegido = 0;

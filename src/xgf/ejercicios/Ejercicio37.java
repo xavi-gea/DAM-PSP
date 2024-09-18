@@ -16,6 +16,10 @@ public class Ejercicio37 {
 		mostrarNivelSalario(anyosExperiencia);
 	}
 
+	/**
+	 * Utilizando anyosExperiencia devuelve un syso con un String distinto
+	 * @param anyosExperiencia
+	 */
 	private static void mostrarNivelSalario(int anyosExperiencia) {
 		
 		String respuesta = "Desarrollador Junior L1 – 15000-18000";
