@@ -10,7 +10,14 @@ import javax.swing.JButton;
 import javax.swing.JTextArea;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.event.ActionEvent;
@@ -24,7 +31,8 @@ public class Simulador extends JFrame {
 	private JSpinner spinnerTertiary;
 	private JSpinner spinnerQuaternary;
 	
-	String[] proteinStructures;
+	private String[] proteinStructures;
+	private static int currentStructure = 0;
 	
 	
 	/**
@@ -126,15 +134,28 @@ public class Simulador extends JFrame {
 					
 					for (int i = 0; i < Integer.parseInt(iterations); i++) {
 						
-						System.out.println("estructura de proteinas a simular: " + structureType);
-						
-						SimularMP(Integer.toString(structureType));
-						
-						//SimulacionMP.main(new String[] {structureType});
+						currentStructure++;
+						simulateMP(Integer.toString(structureType),currentStructure);
 					}
 					
 					structureType++;
 				}
+				
+//				structureType = 1;
+//				
+//				for (String iterations : proteinStructures) {
+//					
+//					for (int i = 0; i < Integer.parseInt(iterations); i++) {
+//						
+//						System.out.println("estructura de proteinas a simular: " + structureType);
+//						
+//						simulateMT(Integer.toString(structureType));
+//						
+//						//SimulacionMP.main(new String[] {structureType});
+//					}
+//					
+//					structureType++;
+//				}
 			}
 		});
 		btnSimulate.setBounds(218, 62, 296, 76);
@@ -145,10 +166,16 @@ public class Simulador extends JFrame {
 		getContentPane().add(textTimeSpent);
 	}
 	
-	private static void SimularMP(String proteinStructure) {
+	private static void simulateMP(String proteinStructureType, int currentStructure) {
 		
-//		File directorioSumador = new File("...");
-//		//File fichResultado = new File(fichResultados);
+		String simulationResult = "";
+		
+		File directorioSumador = new File("...");
+		
+		LocalDateTime startDateTime = LocalDateTime.now();
+		String startDateTimeFormatted = getDateTimeFormatted(startDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		File resultFile = new File(getSimulationPathName("MP", proteinStructureType, startDateTimeFormatted));
 		String javaHome = System.getProperty("java.home");
 		String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
 		String classpath = System.getProperty("java.class.path");
@@ -158,25 +185,63 @@ public class Simulador extends JFrame {
 		command.add("-cp");
 		command.add(classpath);
 		command.add(className);
-		command.add(proteinStructure);
+		command.add(proteinStructureType);
 		
 		ProcessBuilder builder = new ProcessBuilder(command);
-		builder.inheritIO();
 		
-//		builder.directory(directorioSumador);
-//		builder.redirectOutput(fichResultado);
+		//builder.inheritIO();
+		builder.directory(directorioSumador);
+		//builder.redirectOutput(resultFile);
 		
 		try {
 			
-			//Process p = builder.start();
-			
-			builder.start();
+			Process p = builder.start();
+			simulationResult = new String(p.getInputStream().readAllBytes());
 			
 		} catch (IOException e) {
 			
 			e.printStackTrace();
 		}
 		
+		LocalDateTime endDateTime = LocalDateTime.now();
+		String endDateTimeFormatted = getDateTimeFormatted(endDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		List<String> contentToWrite = new ArrayList<String>();
+		contentToWrite.add(startDateTimeFormatted);
+		contentToWrite.add("");
+		contentToWrite.add(endDateTimeFormatted);
+		contentToWrite.add("");
+		//getDateTimeFormatted(, "s_SS");
+		//segundos_centésimas elapsed
+		contentToWrite.add(simulationResult);
+		
+		try {
+			
+			Files.write(resultFile.toPath(), contentToWrite, StandardCharsets.UTF_8);
+			
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		
+	}
+
+	private static String getSimulationPathName(String simulationType, String proteinStructureType, String dateTime) {
+		
+		String pathName = "";
+		pathName += "PROT_";
+		pathName += simulationType + "_";
+		pathName += proteinStructureType + "_";
+		pathName += "n" + Integer.toString(currentStructure) + "_";
+		pathName += dateTime;
+		pathName += ".sim";
+
+		return pathName;
+	}
+
+	private static String getDateTimeFormatted(LocalDateTime dateToFormat, String format) {
+		
+		return LocalDateTime.now().format(DateTimeFormatter.ofPattern(format));
 	}
 
 	public JSpinner getSpinnerPrimary() {
