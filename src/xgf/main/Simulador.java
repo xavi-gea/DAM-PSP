@@ -10,12 +10,9 @@ import javax.swing.JButton;
 import javax.swing.JTextArea;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -31,8 +28,13 @@ public class Simulador extends JFrame {
 	private JSpinner spinnerTertiary;
 	private JSpinner spinnerQuaternary;
 	
+	private JTextArea textTimeSpent;
+	
 	private String[] proteinStructures;
 	private static int currentStructure = 0;
+	
+	private static long totalDurationMP = 0;
+	private static long totalDurationMT = 0;
 	
 	
 	/**
@@ -121,6 +123,8 @@ public class Simulador extends JFrame {
 		btnSimulate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				
+				textTimeSpent.setText("");
+				
 				proteinStructures = new String[] {
 						getSpinnerPrimary().getValue().toString(),
 						getSpinnerSecondary().getValue().toString(),
@@ -135,45 +139,53 @@ public class Simulador extends JFrame {
 					for (int i = 0; i < Integer.parseInt(iterations); i++) {
 						
 						currentStructure++;
-						simulateMP(Integer.toString(structureType),currentStructure);
+						simulateMP(Integer.toString(structureType));
 					}
 					
 					structureType++;
 				}
 				
-//				structureType = 1;
-//				
-//				for (String iterations : proteinStructures) {
-//					
-//					for (int i = 0; i < Integer.parseInt(iterations); i++) {
-//						
-//						System.out.println("estructura de proteinas a simular: " + structureType);
-//						
-//						simulateMT(Integer.toString(structureType));
-//						
-//						//SimulacionMP.main(new String[] {structureType});
-//					}
-//					
-//					structureType++;
-//				}
+				textTimeSpent.append("Se ha tardado " + String.valueOf(totalDurationMP / 1000000000) + " segundos y " + String.valueOf(totalDurationMP / 1000000) + " centésimas en simular con multiproceso" + "\n");
+				
+				// simulateMT
+				
+				structureType = 1;
+				currentStructure = 0;
+				
+				for (String iterations : proteinStructures) {
+					
+					for (int i = 0; i < Integer.parseInt(iterations); i++) {
+						
+						currentStructure++;
+						simulateMT(Integer.toString(structureType));
+					}
+					
+					structureType++;
+				}
+				
+				textTimeSpent.append("Se ha tardado " + String.valueOf(totalDurationMT / 1000000000) + " segundos y " + String.valueOf(totalDurationMT / 1000000) + " centésimas en simular con multihilo" + "\n");
 			}
 		});
+		
 		btnSimulate.setBounds(218, 62, 296, 76);
 		getContentPane().add(btnSimulate);
 		
-		JTextArea textTimeSpent = new JTextArea();
+		textTimeSpent = new JTextArea();
 		textTimeSpent.setBounds(76, 149, 607, 208);
 		getContentPane().add(textTimeSpent);
 	}
-	
-	private static void simulateMP(String proteinStructureType, int currentStructure) {
+
+	private static void simulateMP(String proteinStructureType) {
+		
+		long startNanoseconds = System.nanoTime();
+		
+		LocalDateTime startDateTime = LocalDateTime.now();
+		
+		String startDateTimeFormatted = getDateTimeFormatted(startDateTime, "yyyyMMdd_HHmmss_SS");
 		
 		String simulationResult = "";
 		
-		File directorioSumador = new File("...");
-		
-		LocalDateTime startDateTime = LocalDateTime.now();
-		String startDateTimeFormatted = getDateTimeFormatted(startDateTime, "yyyyMMdd_HHmmss_SS");
+		File directorioResultado = new File("...");
 		
 		File resultFile = new File(getSimulationPathName("MP", proteinStructureType, startDateTimeFormatted));
 		String javaHome = System.getProperty("java.home");
@@ -190,7 +202,7 @@ public class Simulador extends JFrame {
 		ProcessBuilder builder = new ProcessBuilder(command);
 		
 		//builder.inheritIO();
-		builder.directory(directorioSumador);
+		builder.directory(directorioResultado);
 		//builder.redirectOutput(resultFile);
 		
 		try {
@@ -203,16 +215,67 @@ public class Simulador extends JFrame {
 			e.printStackTrace();
 		}
 		
+		long endNanoseconds = System.nanoTime();
 		LocalDateTime endDateTime = LocalDateTime.now();
+		
 		String endDateTimeFormatted = getDateTimeFormatted(endDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		long totalDuration = endNanoseconds - startNanoseconds;
+		totalDurationMP += totalDuration;
+		
+		String totalDurationSecondsMiliseconds = (totalDuration / 1000000000) + "_" + (totalDuration / 1000000);
+		
+		createSimulationFile(startDateTimeFormatted, simulationResult, resultFile, endDateTimeFormatted, totalDurationSecondsMiliseconds);
+	}
+
+	protected void simulateMT(String proteinStructureType) {
+		
+		SimulacionMT sMT = new SimulacionMT(proteinStructureType);
+		
+		Thread thread = new Thread(sMT);
+		
+		thread.start();
+		long startNanoseconds = System.nanoTime();
+		LocalDateTime startDateTime = LocalDateTime.now();
+		
+		String startDateTimeFormatted = getDateTimeFormatted(startDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		File resultFile = new File(getSimulationPathName("MT", proteinStructureType, startDateTimeFormatted));
+		
+		try {
+			
+			thread.join();
+			
+		} catch (InterruptedException e) {
+			
+			e.printStackTrace();
+		}
+		
+		long endNanoseconds = System.nanoTime();
+		LocalDateTime endDateTime = LocalDateTime.now();
+		
+		String endDateTimeFormatted = getDateTimeFormatted(endDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		long totalDuration = endNanoseconds - startNanoseconds;
+		totalDurationMT += totalDuration;
+		
+		String totalDurationSecondsMiliseconds = (totalDuration / 1000000000) + "_" + (totalDuration / 1000000);
+		
+		String simulationResult = String.valueOf(sMT.getSimulationResult());
+		System.out.println("Resultado fuera de clase: " + simulationResult);
+		
+		createSimulationFile(startDateTimeFormatted, simulationResult, resultFile, endDateTimeFormatted, totalDurationSecondsMiliseconds);
+	}
+	
+	private static void createSimulationFile(String startDateTimeFormatted, String simulationResult, File resultFile, String endDateTimeFormatted, String totalDurationSecondsMiliseconds) {
 		
 		List<String> contentToWrite = new ArrayList<String>();
 		contentToWrite.add(startDateTimeFormatted);
 		contentToWrite.add("");
 		contentToWrite.add(endDateTimeFormatted);
 		contentToWrite.add("");
-		//getDateTimeFormatted(, "s_SS");
-		//segundos_centésimas elapsed
+		contentToWrite.add(totalDurationSecondsMiliseconds);
+		contentToWrite.add("");
 		contentToWrite.add(simulationResult);
 		
 		try {
@@ -223,7 +286,6 @@ public class Simulador extends JFrame {
 			
 			e.printStackTrace();
 		}
-		
 	}
 
 	private static String getSimulationPathName(String simulationType, String proteinStructureType, String dateTime) {
