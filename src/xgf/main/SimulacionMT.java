@@ -1,32 +1,46 @@
 package xgf.main;
 
+import java.io.File;
+import java.time.LocalDateTime;
+
 public class SimulacionMT implements Runnable {
 	
-	private String simulationType = "1";
+	private String proteinStructureType;
+	private int currentStructure;
+	
 	private double simulationResult;
 
-	public SimulacionMT(String proteinStructureType) {
+	public SimulacionMT(String proteinStructureType, int currentStructure) {
 		
-		this.simulationType = proteinStructureType;
+		this.proteinStructureType = proteinStructureType;
+		this.currentStructure = currentStructure;
 	}
 	
 	@Override
 	public void run() {
 		
-		this.simulationResult = simulation(returnNumber(simulationType));
-		System.out.println("Resultado dentro de clase: " + this.simulationResult);
-	}
-	
-	private static int returnNumber(String number) {
+		long startNanoseconds = System.nanoTime();
+		LocalDateTime startDateTime = LocalDateTime.now();
 		
-		try {
-			
-			return Integer.parseInt(number);
-			
-		} catch (NumberFormatException e) {
-			
-			return 0;
-		}
+		simulationResult = simulation(Comunes.returnNumber(proteinStructureType));
+		System.out.println(simulationResult);
+		
+		String startDateTimeFormatted = Comunes.getDateTimeFormatted(startDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		File resultFile = new File(Comunes.getSimulationPathName("MT", proteinStructureType, currentStructure, startDateTimeFormatted));
+		
+		long endNanoseconds = System.nanoTime();
+		LocalDateTime endDateTime = LocalDateTime.now();
+		
+		String endDateTimeFormatted = Comunes.getDateTimeFormatted(endDateTime, "yyyyMMdd_HHmmss_SS");
+		
+		long totalDuration = endNanoseconds - startNanoseconds;
+		
+		Simulador.setTotalDurationMT(Simulador.getTotalDurationMT() + totalDuration);
+		
+		String totalDurationSecondsMiliseconds = (totalDuration / 1000000000) + "_" + (totalDuration / 1000000);
+		
+		Comunes.createSimulationFile(startDateTimeFormatted, String.valueOf(simulationResult), resultFile, endDateTimeFormatted, totalDurationSecondsMiliseconds);
 	}
 	
 	public static double simulation(int type) {
@@ -38,9 +52,5 @@ public class SimulacionMT implements Runnable {
 			calc = Math.sin(Math.pow(Math.random(), 2));
 		}
 		return calc;
-	}
-
-	public double getSimulationResult() {
-		return simulationResult;
 	}
 }

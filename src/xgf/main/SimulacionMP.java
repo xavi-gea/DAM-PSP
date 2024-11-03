@@ -6,22 +6,10 @@ public class SimulacionMP {
 		
 		for (int i = 0; i < args.length; i++) {
 			
-			System.out.println(simulation(returnNumber(args[i])));
+			System.out.println(simulation(Comunes.returnNumber(args[i])));
 		}
 	}
 	
-	private static int returnNumber(String number) {
-		
-		try {
-			
-			return Integer.parseInt(number);
-			
-		} catch (NumberFormatException e) {
-			
-			return 0;
-		}
-	}
-
 	public static double simulation(int type) {
 		double calc = 0.0;
 		double simulationTime = Math.pow(5, type);
