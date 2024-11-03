@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"xgf.main","l":"Comunes"},{"p":"xgf.main","l":"SimulacionMP"},{"p":"xgf.main","l":"SimulacionMT"},{"p":"xgf.main","l":"Simulador"}];updateSearchResults();

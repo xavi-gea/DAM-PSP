@@ -9,13 +9,17 @@ import javax.swing.JSpinner;
 import javax.swing.JButton;
 import javax.swing.JTextArea;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.event.ActionEvent;
 
+/**
+ * Creates the visual interface and runs the simulations.
+ * @author Xavi
+ * @version 1.0
+ */
 public class Simulador extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -28,14 +32,10 @@ public class Simulador extends JFrame {
 	private JTextArea textTimeSpent;
 	
 	private String[] proteinStructures;
-	private static int currentStructure = 0;
+	static int currentSimulation = 0;
 	
-	private static long totalDurationMP = 0;
-	private static long totalDurationMT = 0;
-	
+	List<Process> simulationProcesses = new ArrayList<>();
 	List<Thread> simulationThreads = new ArrayList<>();
-	private static List<File> simulationFilenames = new ArrayList<File>();
-	
 	
 	/**
 	 * Launch the application.
@@ -54,7 +54,7 @@ public class Simulador extends JFrame {
 	}
 
 	/**
-	 * Creates the visual frame and 
+	 * Creates the visual frame and starts the multiprocess and threading.
 	 */
 	public Simulador() {
 		
@@ -121,6 +121,10 @@ public class Simulador extends JFrame {
 		
 		JButton btnSimulate = new JButton("Simular");
 		btnSimulate.addActionListener(new ActionListener() {
+			
+			/**
+			 * Starts the multiprocess and threading when btnSimulate is pressed.
+			 */
 			public void actionPerformed(ActionEvent e) {
 				
 				textTimeSpent.setText("");
@@ -132,63 +136,15 @@ public class Simulador extends JFrame {
 						getSpinnerQuaternary().getValue().toString()
 				};
 				
-				int structureType = 1;
-				
-				for (String iterations : proteinStructures) {
+				try {
 					
-					for (int i = 0; i < Integer.parseInt(iterations); i++) {
-						
-						currentStructure++;
-						simulateMP(Integer.toString(structureType));
-					}
+					startMP();
+					startMT();
 					
-					structureType++;
+				} catch (IOException | InterruptedException e1) {
+					
+					e1.printStackTrace();
 				}
-				
-				while (!allfilesExist(getSimulationFilenames())) {
-					
-					// pass
-				}
-				
-				simulationFilenames.clear();
-				
-				textTimeSpent.append("Se ha tardado " + String.valueOf(totalDurationMP / 1000000000) + " segundos y " + String.valueOf(totalDurationMP / 1000000) + " centésimas en simular con multiproceso" + "\n");
-				
-				// simulateMT
-				
-				structureType = 1;
-				
-				for (String iterations : proteinStructures) {
-					
-					for (int i = 0; i < Integer.parseInt(iterations); i++) {
-						
-						currentStructure++;
-						
-						Thread thread = new Thread(new SimulacionMT(Integer.toString(structureType), currentStructure));
-						
-						thread.start();
-						
-						simulationThreads.add(thread);
-					}
-					
-					structureType++;
-				}
-				
-				for (Thread thread : simulationThreads) {
-					
-					try {
-						
-						thread.join();
-						
-					} catch (InterruptedException exception) {
-						
-						exception.printStackTrace();
-					}
-				}
-				
-				simulationFilenames.clear();
-				
-				textTimeSpent.append("Se ha tardado " + String.valueOf(totalDurationMT / 1000000000) + " segundos y " + String.valueOf(totalDurationMT / 1000000) + " centésimas en simular con multihilo" + "\n");
 			}
 		});
 		
@@ -200,85 +156,87 @@ public class Simulador extends JFrame {
 		getContentPane().add(textTimeSpent);
 	}
 
-	private boolean allfilesExist(List<File> files) {
+	/**
+	 * Loops through proteinStructures and runs multiple processes with SimulacionMP.simulateMP. 
+	 * When it's done, it ensures that all processes have finished and 
+	 * appends the total time to textTimeSpent.
+	 * @throws IOException when a process fails to be started.
+	 * @throws InterruptedException when the current thread is interrupted by another thread 
+	 * while it is waiting.
+	 */
+	private void startMP() throws IOException, InterruptedException {
 		
-		for (File file : files) {
+		long startMPnanoseconds = System.nanoTime();
+		
+		int structureType = 1;
+		
+		for (String iterations : proteinStructures) {
 			
-			if (!file.exists()) {
+			for (int i = 0; i < Integer.parseInt(iterations); i++) {
 				
-				return false;
+				currentSimulation++;
+				
+				simulationProcesses.add(SimulacionMP.simulateMP(Integer.toString(structureType), currentSimulation, LocalDateTime.now()));
 			}
+			
+			structureType++;
 		}
 		
-		return true;
-	}
+		for (Process process : simulationProcesses) {
 
-	private static void simulateMP(String proteinStructureType) {
-		
-		long startNanoseconds = System.nanoTime();
-		LocalDateTime startDateTime = LocalDateTime.now();
-		
-		String startDateTimeFormatted = Comunes.getDateTimeFormatted(startDateTime, "yyyyMMdd_HHmmss_SS");
-		
-		String simulationResult = "";
-		
-		File directorioResultado = new File("...");
-		
-		File resultFile = new File(Comunes.getSimulationPathName("MP", proteinStructureType, currentStructure, startDateTimeFormatted));
-		String javaHome = System.getProperty("java.home");
-		String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-		String classpath = System.getProperty("java.class.path");
-		String className = "xgf.main.SimulacionMP";
-		List<String> command = new ArrayList<>();
-		command.add(javaBin);
-		command.add("-cp");
-		command.add(classpath);
-		command.add(className);
-		command.add(proteinStructureType);
-		
-		ProcessBuilder builder = new ProcessBuilder(command);
-		
-		//builder.inheritIO();
-		builder.directory(directorioResultado);
-		//builder.redirectOutput(resultFile);
-		
-		try {
-			
-			Process p = builder.start();
-			simulationResult = new String(p.getInputStream().readAllBytes());
-			
-		} catch (IOException e) {
-			
-			e.printStackTrace();
+			process.waitFor();
 		}
 		
-		long endNanoseconds = System.nanoTime();
-		LocalDateTime endDateTime = LocalDateTime.now();
+		long endMPnanoseconds = System.nanoTime();
 		
-		String endDateTimeFormatted = Comunes.getDateTimeFormatted(endDateTime, "yyyyMMdd_HHmmss_SS");
+		long totalDurationMP = endMPnanoseconds - startMPnanoseconds;
 		
-		long totalDuration = endNanoseconds - startNanoseconds;
-		totalDurationMP += totalDuration;
+		textTimeSpent.append("Se ha tardado " + String.valueOf(totalDurationMP / 1000000000) + " segundos y " + String.valueOf(totalDurationMP / 1000000) + " centésimas en simular con multiproceso" + "\n");
 		
-		String totalDurationSecondsMiliseconds = (totalDuration / 1000000000) + "_" + (totalDuration / 1000000);
-		
-		Comunes.createSimulationFile(startDateTimeFormatted, simulationResult, resultFile, endDateTimeFormatted, totalDurationSecondsMiliseconds);
-	}
-	
-	public static List<File> getSimulationFilenames() {
-		return simulationFilenames;
-	}
-	
-	public static long getTotalDurationMT() {
-		return totalDurationMT;
+		simulationProcesses.clear();
 	}
 
-	public static void setTotalDurationMT(long totalDurationMT) {
-		Simulador.totalDurationMT = totalDurationMT;
-	}
-	
-	public static int getCurrentStructure() {
-		return currentStructure;
+	/**
+	 * Loops through proteinStructures and runs multiple threads with thread.start(). 
+	 * When it's done, it ensures that all threads have finished and 
+	 * appends the total time to textTimeSpent.
+	 * @throws InterruptedException when any thread has interrupted the current thread 
+	 * while it is waiting.
+	 */
+	private void startMT() throws InterruptedException {
+		
+		long startMTnanoseconds = System.nanoTime();
+		
+		int structureType = 1;
+		
+		for (String iterations : proteinStructures) {
+			
+			for (int i = 0; i < Integer.parseInt(iterations); i++) {
+				
+				currentSimulation++;
+				
+				Thread thread = new Thread(new SimulacionMT(Integer.toString(structureType), currentSimulation));
+				
+				thread.start();
+				
+				simulationThreads.add(thread);
+			}
+			
+			structureType++;
+		}
+		
+		for (Thread thread : simulationThreads) {
+
+			thread.join();
+		}
+		
+		long endMTnanoseconds = System.nanoTime();
+		
+		long totalDurationMT = endMTnanoseconds - startMTnanoseconds;
+		
+		textTimeSpent.append("Se ha tardado " + String.valueOf(totalDurationMT / 1000000000) + " segundos y " + String.valueOf(totalDurationMT / 1000000) + " centésimas en simular con multihilo");
+		
+		simulationThreads.clear();
 	}
 
 	public JSpinner getSpinnerPrimary() {
