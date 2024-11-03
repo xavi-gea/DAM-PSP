@@ -152,6 +152,7 @@ public class Simulador extends JFrame {
 		getContentPane().add(btnSimulate);
 		
 		textTimeSpent = new JTextArea();
+		textTimeSpent.setEditable(false);
 		textTimeSpent.setBounds(76, 149, 607, 208);
 		getContentPane().add(textTimeSpent);
 	}
