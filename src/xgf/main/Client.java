@@ -4,14 +4,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+//import javax.swing.JOptionPane;
+//import javax.swing.SwingUtilities;
+import javax.swing.*;
 
 public class Client {
 	
@@ -20,6 +22,8 @@ public class Client {
 	private static OutputStream outputStream;
 	private static BufferedReader bufferedReader;
 	private static PrintWriter printWriter;
+	
+	private static ObjectInputStream objectInputStream;
 	
 	private static String chosenChannel;
 	private static String chosenUser;
@@ -41,6 +45,12 @@ public class Client {
 		Socket socket = new Socket();
 		
 		socket.connect(address);
+		
+		objectInputStream = new ObjectInputStream(socket.getInputStream());
+//		InputStreamReader objectInputStreamReader = new InputStreamReader(objectInputStream);
+//		BufferedReader bufferedObjectReader = new BufferedReader(objectInputStreamReader);
+		
+		
 		
 		inputStream = socket.getInputStream();
 		inputStreamReader = new InputStreamReader(inputStream);
@@ -65,6 +75,8 @@ public class Client {
 		
 		socket.close();
 		sc.close();
+		
+		// thread does not seem to close
 	}
 	
 	private static void askForChannel() throws IOException {
@@ -78,10 +90,10 @@ public class Client {
 			System.out.print("Selecciona un canal de entre los disponibles: ");
 			chosenChannel = sc.nextLine();
 			
-			// send channel
+			// send channel id
 			printWriter.println(chosenChannel);
 			
-			channelExists = bufferedReader.readLine().equals("true") ? true : false;
+			channelExists = objectInputStream.readBoolean();
 			
 			if (!channelExists) {
 				
@@ -108,10 +120,12 @@ public class Client {
 				
 			}else {
 				
-				// send user
+				// send user name
 				printWriter.println(chosenUser);
 				
-				userAlreadyExists = bufferedReader.readLine().equals("true") ? true : false;
+				//userAlreadyExists = bufferedReader.readLine().equals("true") ? true : false;
+				
+				userAlreadyExists = objectInputStream.readBoolean();
 				
 				if(userAlreadyExists) {
 					
@@ -120,29 +134,25 @@ public class Client {
 			}
 			
 		} while (userAlreadyExists);
-	}
-
+	}	
+	
 	private static void askForInput() {
 		
 		String nextInput = "";
+		System.out.println("Pulsa ENTER para enviar mensajes...");
 		
 		do {
-		
-			System.out.println("Pulsa ENTER para enviar mensajes...");
 			
-			if (sc.hasNextLine()) {
+			if (sc.nextLine().isEmpty()) {
 				
-				sc.nextLine();
+				JDialog inputDialog = new JDialog();
+				inputDialog.setAlwaysOnTop(true);
+				
+				nextInput = JOptionPane.showInputDialog(inputDialog,"Introduce \"exit\" para cerrar la conexión");			
+				
+				printWriter.println(nextInput);
 			}
 			
-			System.out.println("Is EDT: " + SwingUtilities.isEventDispatchThread());
-			System.out.println("If false, bad news");
-			
-			nextInput = JOptionPane.showInputDialog("Introduce 'exit' para cerrar la conexión");
-			
-			printWriter.println(nextInput);
-		
 		} while (!nextInput.toLowerCase().equals("exit"));
 	}
-
 }

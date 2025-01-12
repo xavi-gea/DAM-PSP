@@ -31,7 +31,9 @@ public class Server {
 			serverSocket = new ServerSocket(6000);
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+			
+			System.out.println("SERVIDOR >>> Error al arrancar");
+			return;
 		}
 		
 		while (true) {
@@ -49,8 +51,6 @@ public class Server {
 			threadList.add(thread);
 			
 			thread.start();
-			
-			// ¿un arraylist por cada canal que contenga los thread? 
 		}
 	}
 

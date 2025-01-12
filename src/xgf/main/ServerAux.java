@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -21,6 +22,8 @@ public class ServerAux implements Runnable {
 	private OutputStream outputStream;
 	private BufferedReader bufferedReader;
 	private PrintWriter printWriter;
+	
+	private ObjectOutputStream objectOutputStream;
 	
 	private String chosenChannel;
 	private String chosenUser;
@@ -43,6 +46,8 @@ public class ServerAux implements Runnable {
 				outputStream = clientSocket.getOutputStream();
 				printWriter = new PrintWriter(outputStream, true);
 				
+				objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+				
 			} catch (IOException e) {
 				
 				e.printStackTrace();
@@ -53,15 +58,30 @@ public class ServerAux implements Runnable {
 			
 			System.err.println("SERVIDOR >>> Esperando selección de canal y usuario...");
 			
-			getChannel();
-			
-			getUser();
+			try {
+				
+				getChannel();
+				getUser();
+				
+			} catch (IOException e) {
+				
+				System.err.println("SERVIDOR >>> " + chosenUser + " disconnected");
+				
+				try {
+					
+					clientSocket.close();
+					
+				} catch (IOException e1) {
+
+					e1.printStackTrace();
+				}	
+			}			
 			
 //			 if the user does not exist in the channel, change the name of this thread with the channel number 
 //			 and user name?
 //			 an independent List for each one of the channels?
 		
-			Thread.currentThread().setName(chosenUser);
+			Thread.currentThread().setName(chosenUser.toLowerCase());
 			
 			Channel.getServerChannel(chosenChannel).getUsers().add(Thread.currentThread());
 			
@@ -70,88 +90,74 @@ public class ServerAux implements Runnable {
 //			System.err.println("Channel id to print users: " + Channel.getServerChannel(chosenChannel).getId());
 //			System.err.println("Users in channel: " + Channel.getServerChannel(chosenChannel).getUsers());
 			
-			getinput();
-	}
-
-	private void getUser() {
-		
-		chosenUser = "";
-		Boolean chosenUserExists = false;
-		
-		do {
-			
 			try {
 				
-				chosenUser = bufferedReader.readLine();
+				getinput();
 				
 			} catch (IOException e) {
 				
-				e.printStackTrace();
+				System.err.println("SERVIDOR >>> Usuario " + chosenUser + " disconnected");
+				
+				try {
+					
+					clientSocket.close();
+					
+				} catch (IOException e1) {
+
+					e1.printStackTrace();
+				}
 			}
-			
-			chosenUserExists = Channel.userExistsInChannel(chosenUser, chosenChannel);
-			
-			if (chosenUserExists) {
-				
-				printWriter.println("true");
-				
-			}else {
-				
-				printWriter.println("false");
-			}
-			
-		} while (chosenUserExists);
 	}
 
-	private void getChannel() {
+	private void getChannel() throws IOException {
 		
 		chosenChannel = "";
 		
 		Boolean chosenChannelExists = false;
 		
 		do {
-			
-			try {
 				
-				chosenChannel = bufferedReader.readLine();
-				
-			} catch (IOException e) {
-				
-				e.printStackTrace();
-			}
+			chosenChannel = bufferedReader.readLine();
 			
 			chosenChannelExists = Channel.channelExists(chosenChannel);
 			
-			if (chosenChannelExists) {
-				
-				printWriter.println("true");
-				
-			}else {
-				
-				printWriter.println("false");
-			}
+			objectOutputStream.writeBoolean(chosenChannelExists);			
+			objectOutputStream.flush();
 			
 		} while (!chosenChannelExists);
 	}
 
-	private void getinput() {
+	private void getUser() throws IOException {
+		
+		chosenUser = "";
+		Boolean chosenUserExists = false;
+		
+		do {
+				
+			chosenUser = bufferedReader.readLine();
+			
+			chosenUserExists = Channel.userExistsInChannel(chosenUser, chosenChannel);
+			
+			objectOutputStream.writeBoolean(chosenUserExists);
+			objectOutputStream.flush();
+			
+		} while (chosenUserExists);
+	}
+
+	private void getinput() throws IOException {
 		
 		String nextInput = "";
 		
 		do {
-			
-			try {
 				
-				nextInput = bufferedReader.readLine();
-				
-			} catch (IOException e) {
-				
-				e.printStackTrace();
-			}
+			nextInput = bufferedReader.readLine();
 			
-			System.err.println("nextInput: " + nextInput);
+			// handle different inputs
+			// if Server.isCommand
 			
-		} while (!nextInput.toLowerCase().equals("exit"));
+			System.err.println("nextInput desde client: " + nextInput);
+			
+		} while (!nextInput.toLowerCase().equals("exit") && !clientSocket.isClosed());
 		
 	}
 
