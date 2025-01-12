@@ -77,6 +77,7 @@ public class Client {
 		sc.close();
 		
 		// thread does not seem to close
+		// because it's still inside the channel?
 	}
 	
 	private static void askForChannel() throws IOException {
@@ -148,7 +149,7 @@ public class Client {
 				JDialog inputDialog = new JDialog();
 				inputDialog.setAlwaysOnTop(true);
 				
-				nextInput = JOptionPane.showInputDialog(inputDialog,"Introduce \"exit\" para cerrar la conexión");			
+				nextInput = JOptionPane.showInputDialog(inputDialog,"Introduce 'exit' para cerrar la conexión");			
 				
 				printWriter.println(nextInput);
 			}

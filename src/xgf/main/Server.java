@@ -6,14 +6,27 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import xgf.main.commands.*;
 
 public class Server {
 	
 	final static List<String> channelNames = getChannelNames();
 	
 	public static List<Channel> channelList = getChannelList();
+	
+	//static Map<String,Command> commandList = getCommandList();
+	
+	final static List<String> commandList = Arrays.asList(
+			"whois",
+			"channels"
+	);
+	
 	
 	//final static List<String> channelListNumbers = getChannelListNumbers();
 
@@ -84,6 +97,14 @@ public class Server {
 		return channelList;
 	}
 	
+//	private static Map<String,Command> getCommandList() {
+//		
+//		Map<String, Command> commandList = new HashMap<String, Command>();
+//		commandList.put("whois", new WhoIs());
+//		
+//		return commandList;
+//	}
+
 	private static List<String> getChannelListNumbers() {
 		
 		List<String> channelNumberList = new ArrayList<String>();;
@@ -94,6 +115,23 @@ public class Server {
 		}
 		
 		return channelNumberList;
+	}
+
+//	public static boolean isCommand(String nextInput) {
+//		
+//		Command command = commandList.get(nextInput);
+//		
+//		return command != null ? true : false;
+//	}
+	
+	public static boolean isCommand(String nextInput) {
+
+		return commandList.contains(nextInput) ? true : false;
+	}
+	
+	public static String getTimestamp() {
+		
+		return (LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ": ");
 	}
 
 }

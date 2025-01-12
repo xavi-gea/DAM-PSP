@@ -23,13 +23,19 @@ public class ClientAux implements Runnable {
 		
 		try {
 			
+			//System.out.println("Inside ClientAux");
+			
 			inputStream = socket.getInputStream();
 			inputStreamReader = new InputStreamReader(inputStream);
 			bufferedReader = new BufferedReader(inputStreamReader);
 			
 			while (true) {
 				
+				//System.out.println("Inside ClientAux while");
+				
 				System.out.println(bufferedReader.readLine());
+				
+				//System.out.println("After ClientAux while");
 			}
 			
 		} catch (Exception e) {
@@ -38,4 +44,9 @@ public class ClientAux implements Runnable {
 			return;
 		}
 	}
+	
+//	public synchronized Socket getSocket() {
+//		
+//		return socket;
+//	}
 }

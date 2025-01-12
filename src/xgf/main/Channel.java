@@ -26,7 +26,7 @@ public class Channel {
 		return false;
 	}
 	
-	public static boolean userExistsInChannel(String channelID, String userName) {
+	public static boolean userExistsInChannel(String userName, String channelID) {
 		
 		Channel channel = getServerChannel(channelID);
 		
@@ -55,6 +55,24 @@ public class Channel {
 		}
 		
 		return null;
+	}
+	
+	public static String getChannelUsersToString(String channelID) {
+		
+		Channel channel = getServerChannel(channelID);
+		List<String> userList = new ArrayList<String>();
+		
+		for (Thread user : channel.getUsers()) {
+			
+			userList.add(user.getName());
+		}
+		
+		return Server.getTimestamp() + "Usuarios activos canal " + channelID + ": " + userList.toString();
+	}
+	
+	public static String getServerChannelList() {
+		
+		return Server.getTimestamp() + "Canales disponibles: " + Server.channelNames.toString();
 	}
 
 	public List<Thread> getUsers() {

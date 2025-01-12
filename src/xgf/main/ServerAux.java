@@ -8,8 +8,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class ServerAux implements Runnable {
@@ -54,7 +52,7 @@ public class ServerAux implements Runnable {
 			}
 			
 			// send channel list to client
-			printWriter.println(getChannelList());
+			printWriter.println(Channel.getServerChannelList());
 			
 			System.err.println("SERVIDOR >>> Esperando selección de canal y usuario...");
 			
@@ -96,9 +94,11 @@ public class ServerAux implements Runnable {
 				
 			} catch (IOException e) {
 				
-				System.err.println("SERVIDOR >>> Usuario " + chosenUser + " disconnected");
+				System.err.println("SERVIDOR >>> Usuario " + chosenUser + " se ha desconectado del canal " + chosenChannel);
 				
 				try {
+					
+					Channel.getServerChannel(chosenChannel).getUsers().remove(Thread.currentThread());
 					
 					clientSocket.close();
 					
@@ -155,21 +155,64 @@ public class ServerAux implements Runnable {
 			// handle different inputs
 			// if Server.isCommand
 			
-			System.err.println("nextInput desde client: " + nextInput);
+			//System.err.println("nextInput desde client: " + nextInput);
+			
+			// to each user in channel?, write:
+			// declare local print writers grabbing thread socket??
+			
+			System.err.println("SERVIDOR >>> " + chosenUser + " (canal " + chosenChannel + ") >>> " + nextInput);
+			
+			printWriter.println(Server.getTimestamp() + nextInput);
+			
+			if (Server.isCommand(nextInput)) {
+				
+				invokeCommand(nextInput);
+				
+			}else {
+				
+				Channel thisChannel = Channel.getServerChannel(chosenChannel);
+				
+				for (Thread user : thisChannel.getUsers()) {
+					
+					// how do I get sockets?
+					// do I pass the socket of the client to the server?
+					// clientAux listens for messages from serverAux 
+					// inside Channel, make users be a list of Users?
+					// and each of those users contain it's name and socket? (of the server)
+				}
+			}
+			
+
 			
 		} while (!nextInput.toLowerCase().equals("exit") && !clientSocket.isClosed());
 		
 	}
 
-	private String getChannelList() {
+	private void invokeCommand(String nextInput) {
 		
-		return getTimestamp() + "Canales disponibles: " + Server.channelNames.toString();
-	}
-	
-	private String getTimestamp() {
+		if (nextInput.equals("whois")) {
+			
+			printWriter.println(Channel.getChannelUsersToString(chosenChannel));
+			
+		}else if(nextInput.equals("channels")) {
+			
+			printWriter.println(Channel.getServerChannelList());
+		}
 		
-		return (LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ": ");
 	}
 
-	
+//	private String getServerChannelList() {
+//		
+//		return getTimestamp() + "Canales disponibles: " + Server.channelNames.toString();
+//	}
+//	
+//	private String getTimestamp() {
+//		
+//		return (LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ": ");
+//	}
+
+	public synchronized Socket getSocket() {
+		
+		return clientSocket;
+	}
 }
