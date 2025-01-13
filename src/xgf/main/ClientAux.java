@@ -33,6 +33,8 @@ public class ClientAux implements Runnable {
 				
 				//System.out.println("Inside ClientAux while");
 				
+				// if message is from user, system.err?
+				
 				System.out.println(bufferedReader.readLine());
 				
 				//System.out.println("After ClientAux while");

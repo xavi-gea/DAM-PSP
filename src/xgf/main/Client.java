@@ -62,7 +62,6 @@ public class Client {
 		System.out.println(bufferedReader.readLine());
 		
 		askForChannel();
-		
 		askForUser();
 		
 		ClientAux clientAux = new ClientAux(socket);

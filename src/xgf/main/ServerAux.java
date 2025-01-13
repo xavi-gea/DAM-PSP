@@ -25,6 +25,8 @@ public class ServerAux implements Runnable {
 	
 	private String chosenChannel;
 	private String chosenUser;
+	
+	private User clientUser;
 
 	public ServerAux(Socket clientSocket, List<Thread> threadList) {
 		
@@ -81,7 +83,12 @@ public class ServerAux implements Runnable {
 		
 			Thread.currentThread().setName(chosenUser.toLowerCase());
 			
-			Channel.getServerChannel(chosenChannel).getUsers().add(Thread.currentThread());
+			// add new user
+			
+			clientUser = new User(chosenUser, clientSocket);
+			
+			//Channel.getServerChannel(chosenChannel).getUsers().add(Thread.currentThread());
+			Channel.getServerChannel(chosenChannel).getUsers().add(clientUser);
 			
 			System.err.println("SERVIDOR >>> Usuario " + chosenUser + " ha seleccionado canal " + chosenChannel);
 			
@@ -98,7 +105,7 @@ public class ServerAux implements Runnable {
 				
 				try {
 					
-					Channel.getServerChannel(chosenChannel).getUsers().remove(Thread.currentThread());
+					Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
 					
 					clientSocket.close();
 					
@@ -121,7 +128,7 @@ public class ServerAux implements Runnable {
 			
 			chosenChannelExists = Channel.channelExists(chosenChannel);
 			
-			objectOutputStream.writeBoolean(chosenChannelExists);			
+			objectOutputStream.writeBoolean(chosenChannelExists);
 			objectOutputStream.flush();
 			
 		} while (!chosenChannelExists);
@@ -172,7 +179,19 @@ public class ServerAux implements Runnable {
 				
 				Channel thisChannel = Channel.getServerChannel(chosenChannel);
 				
-				for (Thread user : thisChannel.getUsers()) {
+				for (User user : thisChannel.getUsers()) {
+					
+					//if (Channel.userExistsInChannel(user.getName(), thisChannel.getId())) {
+						
+					if (!user.getName().equals(chosenUser)) {
+						
+						System.out.println(user.getName() + " is not equals to " + chosenUser);
+						
+						OutputStream userOutputStream = user.getSocket().getOutputStream();
+						PrintWriter userPrintWriter = new PrintWriter(userOutputStream,true);
+						
+						userPrintWriter.println(Server.getTimestamp() + chosenUser + " >>> " + nextInput);
+					}
 					
 					// how do I get sockets?
 					// do I pass the socket of the client to the server?

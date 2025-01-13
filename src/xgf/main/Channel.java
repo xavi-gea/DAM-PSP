@@ -7,13 +7,13 @@ public class Channel {
 
 	private String id;
 	private String name;
-	private List<Thread> users;
+	private List<User> users;
 	
 	public Channel(String id, String name) {
 		super();
 		this.id = id;
 		this.name = name;
-		this.users = new ArrayList<Thread>();
+		this.users = new ArrayList<User>();
 	}
 	
 	public static boolean channelExists(String channelID) {
@@ -32,7 +32,7 @@ public class Channel {
 		
 		if (channel != null) {
 			
-			for (Thread user : channel.users) {
+			for (User user : channel.users) {
 				
 				if (user.getName().equals(userName.toLowerCase())) {
 					
@@ -62,7 +62,7 @@ public class Channel {
 		Channel channel = getServerChannel(channelID);
 		List<String> userList = new ArrayList<String>();
 		
-		for (Thread user : channel.getUsers()) {
+		for (User user : channel.getUsers()) {
 			
 			userList.add(user.getName());
 		}
@@ -75,7 +75,7 @@ public class Channel {
 		return Server.getTimestamp() + "Canales disponibles: " + Server.channelNames.toString();
 	}
 
-	public List<Thread> getUsers() {
+	public List<User> getUsers() {
 		return users;
 	}
 
