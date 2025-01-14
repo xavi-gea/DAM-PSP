@@ -19,11 +19,11 @@ public class Client {
 	
 	private static InputStream inputStream;
 	private static InputStreamReader inputStreamReader;
+	private static ObjectInputStream objectInputStream;
+	
 	private static OutputStream outputStream;
 	private static BufferedReader bufferedReader;
 	private static PrintWriter printWriter;
-	
-	private static ObjectInputStream objectInputStream;
 	
 	private static String chosenChannel;
 	private static String chosenUser;
@@ -44,27 +44,23 @@ public class Client {
 		
 		Socket socket = new Socket();
 		
-		socket.connect(address);
-		
-		objectInputStream = new ObjectInputStream(socket.getInputStream());
-//		InputStreamReader objectInputStreamReader = new InputStreamReader(objectInputStream);
-//		BufferedReader bufferedObjectReader = new BufferedReader(objectInputStreamReader);
-		
-		
+		socket.connect(address);		
 		
 		inputStream = socket.getInputStream();
 		inputStreamReader = new InputStreamReader(inputStream);
-		outputStream = socket.getOutputStream();
 		bufferedReader = new BufferedReader(inputStreamReader);
+		objectInputStream = new ObjectInputStream(inputStream);
+		
+		outputStream = socket.getOutputStream();
 		printWriter = new PrintWriter(outputStream, true);
-			
+		
 		// read channel list
 		System.out.println(bufferedReader.readLine());
 		
 		askForChannel();
 		askForUser();
 		
-		ClientAux clientAux = new ClientAux(socket);
+		ClientAux clientAux = new ClientAux(socket,bufferedReader,objectInputStream);
 		
 		Thread thread = new Thread(clientAux);
 		
@@ -75,7 +71,7 @@ public class Client {
 		socket.close();
 		sc.close();
 		
-		// thread does not seem to close
+		// check if thread closes
 		// because it's still inside the channel?
 	}
 	

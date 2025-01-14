@@ -17,10 +17,10 @@ public class ServerAux implements Runnable {
 	
 	private InputStream inputStream;
 	private InputStreamReader inputStreamReader;
+	
 	private OutputStream outputStream;
 	private BufferedReader bufferedReader;
 	private PrintWriter printWriter;
-	
 	private ObjectOutputStream objectOutputStream;
 	
 	private String chosenChannel;
@@ -45,8 +45,7 @@ public class ServerAux implements Runnable {
 				
 				outputStream = clientSocket.getOutputStream();
 				printWriter = new PrintWriter(outputStream, true);
-				
-				objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+				objectOutputStream = new ObjectOutputStream(outputStream);
 				
 			} catch (IOException e) {
 				
@@ -99,20 +98,13 @@ public class ServerAux implements Runnable {
 				
 				getinput();
 				
+				Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
+				
+				clientSocket.close();
+				
 			} catch (IOException e) {
 				
 				System.err.println("SERVIDOR >>> Usuario " + chosenUser + " se ha desconectado del canal " + chosenChannel);
-				
-				try {
-					
-					Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
-					
-					clientSocket.close();
-					
-				} catch (IOException e1) {
-
-					e1.printStackTrace();
-				}
 			}
 	}
 
@@ -155,8 +147,8 @@ public class ServerAux implements Runnable {
 		
 		String nextInput = "";
 		
-		do {
-				
+		while (!nextInput.toLowerCase().equals("exit") && !clientSocket.isClosed()) {
+			
 			nextInput = bufferedReader.readLine();
 			
 			// handle different inputs
@@ -169,6 +161,9 @@ public class ServerAux implements Runnable {
 			
 			System.err.println("SERVIDOR >>> " + chosenUser + " (canal " + chosenChannel + ") >>> " + nextInput);
 			
+			objectOutputStream.writeBoolean(true);
+			objectOutputStream.flush();
+			
 			printWriter.println(Server.getTimestamp() + nextInput);
 			
 			if (Server.isCommand(nextInput)) {
@@ -180,15 +175,16 @@ public class ServerAux implements Runnable {
 				Channel thisChannel = Channel.getServerChannel(chosenChannel);
 				
 				for (User user : thisChannel.getUsers()) {
-					
-					//if (Channel.userExistsInChannel(user.getName(), thisChannel.getId())) {
 						
 					if (!user.getName().equals(chosenUser)) {
 						
-						System.out.println(user.getName() + " is not equals to " + chosenUser);
-						
 						OutputStream userOutputStream = user.getSocket().getOutputStream();
 						PrintWriter userPrintWriter = new PrintWriter(userOutputStream,true);
+						ObjectOutputStream userObjectOutputStream = new ObjectOutputStream(userOutputStream);
+						
+						userObjectOutputStream.writeBoolean(false);
+						userObjectOutputStream.flush();
+						userObjectOutputStream.reset();
 						
 						userPrintWriter.println(Server.getTimestamp() + chosenUser + " >>> " + nextInput);
 					}
@@ -200,20 +196,25 @@ public class ServerAux implements Runnable {
 					// and each of those users contain it's name and socket? (of the server)
 				}
 			}
-			
-
-			
-		} while (!nextInput.toLowerCase().equals("exit") && !clientSocket.isClosed());
+		}
+		
+		
 		
 	}
 
-	private void invokeCommand(String nextInput) {
+	private void invokeCommand(String nextInput) throws IOException {
 		
 		if (nextInput.equals("whois")) {
+			
+			objectOutputStream.writeBoolean(false);
+			objectOutputStream.flush();
 			
 			printWriter.println(Channel.getChannelUsersToString(chosenChannel));
 			
 		}else if(nextInput.equals("channels")) {
+			
+			objectOutputStream.writeBoolean(false);
+			objectOutputStream.flush();
 			
 			printWriter.println(Channel.getServerChannelList());
 		}
