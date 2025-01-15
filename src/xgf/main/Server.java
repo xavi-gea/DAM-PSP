@@ -12,24 +12,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import xgf.main.commands.*;
-
 public class Server {
 	
 	final static List<String> channelNames = getChannelNames();
 	
 	public static List<Channel> channelList = getChannelList();
 	
-	//static Map<String,Command> commandList = getCommandList();
-	
 	final static List<String> commandList = Arrays.asList(
 			"whois",
 			"channels",
-			"exit"
+			"exit",
+			"@canal"
 	);
-	
-	
-	//final static List<String> channelListNumbers = getChannelListNumbers();
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) throws IOException {
@@ -97,14 +91,6 @@ public class Server {
 		
 		return channelList;
 	}
-	
-//	private static Map<String,Command> getCommandList() {
-//		
-//		Map<String, Command> commandList = new HashMap<String, Command>();
-//		commandList.put("whois", new WhoIs());
-//		
-//		return commandList;
-//	}
 
 	private static List<String> getChannelListNumbers() {
 		
@@ -117,17 +103,18 @@ public class Server {
 		
 		return channelNumberList;
 	}
-
-//	public static boolean isCommand(String nextInput) {
-//		
-//		Command command = commandList.get(nextInput);
-//		
-//		return command != null ? true : false;
-//	}
 	
 	public static boolean isCommand(String nextInput) {
-
-		return commandList.contains(nextInput) ? true : false;
+		
+		for (String command : commandList) {
+			
+			if (nextInput.startsWith(command)) {
+				
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	public static String getTimestamp() {

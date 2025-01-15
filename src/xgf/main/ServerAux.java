@@ -37,77 +37,74 @@ public class ServerAux implements Runnable {
 	@Override
 	public void run() {
 		
-			try {
-				
-				inputStream = clientSocket.getInputStream();
-				inputStreamReader = new InputStreamReader(inputStream);
-				bufferedReader = new BufferedReader(inputStreamReader);
-				
-				outputStream = clientSocket.getOutputStream();
-				printWriter = new PrintWriter(outputStream, true);
-				objectOutputStream = new ObjectOutputStream(outputStream);
-				
-			} catch (IOException e) {
-				
-				e.printStackTrace();
-			}
+		try {
 			
-			// send channel list to client
-			printWriter.println(Channel.getServerChannelList());
+			inputStream = clientSocket.getInputStream();
+			inputStreamReader = new InputStreamReader(inputStream);
+			bufferedReader = new BufferedReader(inputStreamReader);
 			
-			System.err.println("SERVIDOR >>> Esperando selección de canal y usuario...");
+			outputStream = clientSocket.getOutputStream();
+			printWriter = new PrintWriter(outputStream, true);
+			objectOutputStream = new ObjectOutputStream(outputStream);
 			
-			try {
-				
-				getChannel();
-				getUser();
-				objectOutputStream.flush();
-				//objectOutputStream.reset();
-				
-			} catch (IOException e) {
-				
-				System.err.println("SERVIDOR >>> " + chosenUser + " disconnected");
-				
-				try {
-					
-					clientSocket.close();
-					
-				} catch (IOException e1) {
-
-					e1.printStackTrace();
-				}	
-			}			
+		} catch (IOException e) {
 			
-//			 if the user does not exist in the channel, change the name of this thread with the channel number 
-//			 and user name?
-//			 an independent List for each one of the channels?
+			return;
+		}
 		
-			Thread.currentThread().setName(chosenUser.toLowerCase());
+		printWriter.println(Channel.getServerChannelList());
+		
+		System.err.println("SERVIDOR >>> Esperando selección de canal y usuario...");
+		
+		try {
 			
-			// add new user
+			getChannel();
+			getUser();
+			objectOutputStream.flush();
+			
+		} catch (IOException e) {
+			
+			System.err.println("SERVIDOR >>> El usuario nuevo se ha desconectado");
+			
+			try {
+				
+				clientSocket.close();
+				
+			} catch (IOException e1) {
+
+				return;
+			}	
+		}
+		
+		try {
+			
+			Thread.currentThread().setName(chosenUser.toLowerCase());
 			
 			clientUser = new User(chosenUser, clientSocket, objectOutputStream);
 			
-			//Channel.getServerChannel(chosenChannel).getUsers().add(Thread.currentThread());
 			Channel.getServerChannel(chosenChannel).getUsers().add(clientUser);
 			
 			System.err.println("SERVIDOR >>> Usuario " + chosenUser + " ha seleccionado canal " + chosenChannel);
 			
-//			System.err.println("Channel id to print users: " + Channel.getServerChannel(chosenChannel).getId());
-//			System.err.println("Users in channel: " + Channel.getServerChannel(chosenChannel).getUsers());
+			getinput();
+			
+		} catch (IOException e) {
+			
+			System.err.println("SERVIDOR >>> Usuario " + chosenUser + " se ha desconectado del canal " + chosenChannel);
+			
+		} finally {
+		
+			Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
 			
 			try {
-				
-				getinput();
-				
-				Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
 				
 				clientSocket.close();
 				
 			} catch (IOException e) {
 				
-				System.err.println("SERVIDOR >>> Usuario " + chosenUser + " se ha desconectado del canal " + chosenChannel);
+				return;
 			}
+		}
 	}
 
 	private void getChannel() throws IOException {
@@ -153,26 +150,12 @@ public class ServerAux implements Runnable {
 			
 			nextInput = bufferedReader.readLine();
 			
-			// handle different inputs
-			// if Server.isCommand
-			
-			//System.err.println("nextInput desde client: " + nextInput);
-			
-			// to each user in channel?, write:
-			// declare local print writers grabbing thread socket??
-			
 			System.err.println("SERVIDOR >>> " + chosenUser + " (canal " + chosenChannel + ") >>> " + nextInput);
-			
-			System.out.println("clientsocket closed: " + clientSocket.isClosed());
-			
-			//objectOutputStream = new ObjectOutputStream(outputStream);
 			
 			objectOutputStream.writeBoolean(true);
 			objectOutputStream.flush();
 			
 			printWriter.println(Server.getTimestamp() + nextInput);
-			
-			//objectOutputStream.reset();
 			
 			if (Server.isCommand(nextInput)) {
 				
@@ -180,73 +163,72 @@ public class ServerAux implements Runnable {
 				
 			}else {
 				
-				Channel thisChannel = Channel.getServerChannel(chosenChannel);
+				writeToChannelUsers(nextInput, Channel.getServerChannel(chosenChannel));
+			}
+		}
+	}
+
+	private void writeToChannelUsers(String message, Channel channel) throws IOException {
+		
+		for (User user : channel.getUsers()) {
 				
-				for (User user : thisChannel.getUsers()) {
-						
-					if (!user.getName().equals(chosenUser)) {
-						
-						OutputStream userOutputStream = user.getSocket().getOutputStream();
-						PrintWriter userPrintWriter = new PrintWriter(userOutputStream,true);
-						ObjectOutputStream userObjectOutputStream = user.getObjectOutputStream();
-						// ^ I shouldn't be doing a new ObjectOutputStream?
-						// do I place it inside the user properties so I can directly grab it?
-						
-						userObjectOutputStream.writeBoolean(false);
-						userObjectOutputStream.flush();
-						//userObjectOutputStream.reset();
-						
-						userPrintWriter.println(Server.getTimestamp() + chosenUser + " >>> " + nextInput);
-					}
+			if (!user.getName().equals(chosenUser)) {
+				
+				OutputStream userOutputStream = user.getSocket().getOutputStream();
+				PrintWriter userPrintWriter = new PrintWriter(userOutputStream,true);
+				ObjectOutputStream userObjectOutputStream = user.getObjectOutputStream();
+				
+				userObjectOutputStream.writeBoolean(false);
+				userObjectOutputStream.flush();
+				
+				if (channel.getId().equals(chosenChannel)) {
 					
-					// how do I get sockets?
-					// do I pass the socket of the client to the server?
-					// clientAux listens for messages from serverAux 
-					// inside Channel, make users be a list of Users?
-					// and each of those users contain it's name and socket? (of the server)
+					userPrintWriter.println(Server.getTimestamp() + chosenUser + " >>> " + message);
+					
+				}else {
+					
+					// string format?
+					
+//					String formatString = "%s(canal%d, %d) >>> %d";
+//					
+//					userPrintWriter.println(String.format(formatString, Server.getTimestamp(), channel.getId(), chosenUser,message));
+					
+					userPrintWriter.println(Server.getTimestamp() + "(canal" + channel.getId() + ", " + chosenUser + ") >>> " + message);
 				}
 			}
 		}
-		
-		// client should close itself?
-		
 	}
 
 	private void invokeCommand(String nextInput) throws IOException {
 		
-		if (nextInput.equals("whois")) {
+		if (nextInput.startsWith("whois")) {
 			
 			objectOutputStream.writeBoolean(false);
 			objectOutputStream.flush();
 			
 			printWriter.println(Channel.getChannelUsersToString(chosenChannel));
 			
-		}else if(nextInput.equals("channels")) {
+		}else if(nextInput.startsWith("channels")) {
 			
 			objectOutputStream.writeBoolean(false);
 			objectOutputStream.flush();
 			
 			printWriter.println(Channel.getServerChannelList());
 			
-		}else if(nextInput.equals("exit")) {
+		}else if(nextInput.startsWith("exit")) {
 			
 			return;
+		
+		}else if(nextInput.startsWith("@canal") && nextInput.length() > 8) {
+			
+			String targetChannel = Character.toString(nextInput.charAt(6));
+			
+			if (Channel.channelExists(targetChannel)) {
+				
+				String message = nextInput.substring(8);
+				
+				writeToChannelUsers(message, Channel.getServerChannel(targetChannel));
+			}
 		}
-		
-	}
-
-//	private String getServerChannelList() {
-//		
-//		return getTimestamp() + "Canales disponibles: " + Server.channelNames.toString();
-//	}
-//	
-//	private String getTimestamp() {
-//		
-//		return (LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ": ");
-//	}
-
-	public synchronized Socket getSocket() {
-		
-		return clientSocket;
 	}
 }

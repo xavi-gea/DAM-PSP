@@ -119,8 +119,6 @@ public class Client {
 				// send user name
 				printWriter.println(chosenUser);
 				
-				//userAlreadyExists = bufferedReader.readLine().equals("true") ? true : false;
-				
 				userAlreadyExists = objectInputStream.readBoolean();
 				
 				if(userAlreadyExists) {
