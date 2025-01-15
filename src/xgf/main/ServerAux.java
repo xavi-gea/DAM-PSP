@@ -61,6 +61,8 @@ public class ServerAux implements Runnable {
 				
 				getChannel();
 				getUser();
+				objectOutputStream.flush();
+				//objectOutputStream.reset();
 				
 			} catch (IOException e) {
 				
@@ -84,7 +86,7 @@ public class ServerAux implements Runnable {
 			
 			// add new user
 			
-			clientUser = new User(chosenUser, clientSocket);
+			clientUser = new User(chosenUser, clientSocket, objectOutputStream);
 			
 			//Channel.getServerChannel(chosenChannel).getUsers().add(Thread.currentThread());
 			Channel.getServerChannel(chosenChannel).getUsers().add(clientUser);
@@ -161,10 +163,16 @@ public class ServerAux implements Runnable {
 			
 			System.err.println("SERVIDOR >>> " + chosenUser + " (canal " + chosenChannel + ") >>> " + nextInput);
 			
+			System.out.println("clientsocket closed: " + clientSocket.isClosed());
+			
+			//objectOutputStream = new ObjectOutputStream(outputStream);
+			
 			objectOutputStream.writeBoolean(true);
 			objectOutputStream.flush();
 			
 			printWriter.println(Server.getTimestamp() + nextInput);
+			
+			//objectOutputStream.reset();
 			
 			if (Server.isCommand(nextInput)) {
 				
@@ -180,11 +188,13 @@ public class ServerAux implements Runnable {
 						
 						OutputStream userOutputStream = user.getSocket().getOutputStream();
 						PrintWriter userPrintWriter = new PrintWriter(userOutputStream,true);
-						ObjectOutputStream userObjectOutputStream = new ObjectOutputStream(userOutputStream);
+						ObjectOutputStream userObjectOutputStream = user.getObjectOutputStream();
+						// ^ I shouldn't be doing a new ObjectOutputStream?
+						// do I place it inside the user properties so I can directly grab it?
 						
 						userObjectOutputStream.writeBoolean(false);
 						userObjectOutputStream.flush();
-						userObjectOutputStream.reset();
+						//userObjectOutputStream.reset();
 						
 						userPrintWriter.println(Server.getTimestamp() + chosenUser + " >>> " + nextInput);
 					}
@@ -198,7 +208,7 @@ public class ServerAux implements Runnable {
 			}
 		}
 		
-		
+		// client should close itself?
 		
 	}
 
@@ -217,6 +227,10 @@ public class ServerAux implements Runnable {
 			objectOutputStream.flush();
 			
 			printWriter.println(Channel.getServerChannelList());
+			
+		}else if(nextInput.equals("exit")) {
+			
+			return;
 		}
 		
 	}

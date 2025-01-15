@@ -17,11 +17,11 @@ public class ClientAux implements Runnable {
 	private Boolean isMessageFromSelf;
 	private String messageToShow;
 
-	public ClientAux(Socket socket, BufferedReader bufferedReader, ObjectInputStream objectInputStream) throws IOException {
+	public ClientAux(Socket socket, BufferedReader bufferedReader, ObjectInputStream objectInputStream2) throws IOException {
 		
 		this.socket = socket;
 		this.bufferedReader = bufferedReader;
-		this.objectInputStream = objectInputStream;
+		this.objectInputStream = objectInputStream2;
 	}
 
 	@Override

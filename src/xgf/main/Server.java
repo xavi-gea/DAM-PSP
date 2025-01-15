@@ -24,7 +24,8 @@ public class Server {
 	
 	final static List<String> commandList = Arrays.asList(
 			"whois",
-			"channels"
+			"channels",
+			"exit"
 	);
 	
 	
