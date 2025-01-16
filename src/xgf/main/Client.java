@@ -15,6 +15,9 @@ import java.util.Scanner;
 //import javax.swing.SwingUtilities;
 import javax.swing.*;
 
+/**
+ * @author Xavi
+ */
 public class Client {
 	
 	private static InputStream inputStream;
@@ -28,53 +31,83 @@ public class Client {
 	private static String chosenChannel;
 	private static String chosenUser;
 	
-	private static Scanner sc = new Scanner(System.in);
+	private static Scanner scanner = new Scanner(System.in);
 
-	public static void main(String[] args) throws IOException {
-		
-//		System.out.print("IP: ");
-//		String hostname = sc.nextLine();
-//		
-//		System.out.print("Puerto: ");
-//		Integer port = sc.nextInt();
-//		
-//		InetSocketAddress address = new InetSocketAddress(hostname, port);
-		
-		InetSocketAddress address = new InetSocketAddress("localhost", 6000);
+	/**
+	 * Main loop of the client. Asks for data related to the channel, user name and messages to send to the server
+	 * @param args
+	 */
+	public static void main(String[] args) {
 		
 		Socket socket = new Socket();
 		
-		socket.connect(address);		
-		
-		inputStream = socket.getInputStream();
-		inputStreamReader = new InputStreamReader(inputStream);
-		bufferedReader = new BufferedReader(inputStreamReader);
-		objectInputStream = new ObjectInputStream(inputStream);
-		
-		outputStream = socket.getOutputStream();
-		printWriter = new PrintWriter(outputStream, true);
-		
-		// read channel list
-		System.out.println(bufferedReader.readLine());
-		
-		askForChannel();
-		askForUser();
-		
-		ClientAux clientAux = new ClientAux(socket,bufferedReader,objectInputStream);
-		
-		Thread thread = new Thread(clientAux);
-		
-		thread.start();
+		try {
 			
-		askForInput();
+			System.out.print("IP: ");
+			String hostname = scanner.nextLine();
+			
+			System.out.print("Puerto: ");
+			String port = scanner.nextLine();
+			
+			InetSocketAddress address = new InetSocketAddress(hostname, Integer.parseInt(port));
+			
+			socket.connect(address);
+			
+			inputStream = socket.getInputStream();
+			inputStreamReader = new InputStreamReader(inputStream);
+			bufferedReader = new BufferedReader(inputStreamReader);
+			objectInputStream = new ObjectInputStream(inputStream);
+			
+			outputStream = socket.getOutputStream();
+			printWriter = new PrintWriter(outputStream, true);
+			
+			System.out.println(bufferedReader.readLine());
+			
+			askForChannel();
+			askForUser();
+			
+		} catch (Exception e) {
+			
+			System.err.println("No ha podido conectarse y/o configurar la conexión con el servidor");
+			System.err.println("Por favor, comprueba que la IP y puerto son correctos");
+			System.exit(0);
+		}
 		
-		socket.close();
-		sc.close();
-		
-		// check if thread closes
-		// because it's still inside the channel?
+		try {
+			
+			ClientAux clientAux = new ClientAux(socket,bufferedReader,objectInputStream);
+			
+			Thread thread = new Thread(clientAux);
+			
+			thread.start();
+				
+			askForInput();
+			
+		} catch (Exception e) {
+			
+			System.err.println("Se ha perdido la conexión con el servidor");
+			
+		}finally {
+			
+			try {
+				
+				socket.close();
+				
+			} catch (IOException e) {
+				
+				return;
+			}
+			
+			scanner.close();
+			
+			System.exit(0);
+		}
 	}
 	
+	/**
+	 * Constantly asks for a channel until the server confirms that it is valid
+	 * @throws IOException If the communication with the server returns an error
+	 */
 	private static void askForChannel() throws IOException {
 		
 		chosenChannel = "";
@@ -84,9 +117,8 @@ public class Client {
 		do {
 			
 			System.out.print("Selecciona un canal de entre los disponibles: ");
-			chosenChannel = sc.nextLine();
+			chosenChannel = scanner.nextLine();
 			
-			// send channel id
 			printWriter.println(chosenChannel);
 			
 			channelExists = objectInputStream.readBoolean();
@@ -99,6 +131,10 @@ public class Client {
 		} while (!channelExists);
 	}
 
+	/**
+	 * Constantly asks for a user name until the server confirms that it is valid
+	 * @throws IOException If the communication with the server returns an error
+	 */
 	private static void askForUser() throws IOException {
 		
 		chosenUser = "";
@@ -108,7 +144,7 @@ public class Client {
 		do {
 			
 			System.out.print("Introduce un nombre de usuario: ");
-			chosenUser = sc.nextLine();
+			chosenUser = scanner.nextLine();
 			
 			if (chosenUser.contains(" ")) {
 				
@@ -116,7 +152,6 @@ public class Client {
 				
 			}else {
 				
-				// send user name
 				printWriter.println(chosenUser);
 				
 				userAlreadyExists = objectInputStream.readBoolean();
@@ -130,6 +165,9 @@ public class Client {
 		} while (userAlreadyExists);
 	}	
 	
+	/**
+	 * Constantly asks for user input unless you send "exit"
+	 */
 	private static void askForInput() {
 		
 		String nextInput = "";
@@ -137,14 +175,17 @@ public class Client {
 		
 		do {
 			
-			if (sc.nextLine().isEmpty()) {
+			if (scanner.nextLine().isEmpty()) {
 				
 				JDialog inputDialog = new JDialog();
 				inputDialog.setAlwaysOnTop(true);
 				
 				nextInput = JOptionPane.showInputDialog(inputDialog,"Introduce 'exit' para cerrar la conexión");			
 				
-				printWriter.println(nextInput);
+				if (nextInput != null) {
+					
+					printWriter.println(nextInput);
+				}				
 			}
 			
 		} while (!nextInput.toLowerCase().equals("exit"));

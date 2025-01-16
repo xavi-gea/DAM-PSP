@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * @author Xavi
+ */
 public class Server {
 	
 	final static List<String> channelNames = getChannelNames();
@@ -25,8 +28,12 @@ public class Server {
 			"@canal"
 	);
 
+	/**
+	 * Main loop that checks for new clients. Instantiates a new ServerAux class if connection is successful
+	 * @param args
+	 */
 	@SuppressWarnings("resource")
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		
 		System.err.println("SERVIDOR >>> Arrancando...");
 		
@@ -41,27 +48,40 @@ public class Server {
 		} catch (IOException e) {
 			
 			System.out.println("SERVIDOR >>> Error al arrancar");
-			return;
+			System.exit(0);
 		}
 		
 		while (true) {
 		
 			System.err.println("SERVIDOR >>> Escuchando...");
 			
-			Socket clientSocket = serverSocket.accept();
+			Socket clientSocket;
 			
-			System.err.println("SERVIDOR >>> Conexión recibida, creando hilo...");
-			
-			ServerAux serverAux = new ServerAux(clientSocket, threadList);
-			
-			Thread thread = new Thread(serverAux);
-			
-			threadList.add(thread);
-			
-			thread.start();
+			try {
+				
+				clientSocket = serverSocket.accept();
+				
+				System.err.println("SERVIDOR >>> Conexión recibida, creando hilo...");
+				
+				ServerAux serverAux = new ServerAux(clientSocket);
+				
+				Thread thread = new Thread(serverAux);
+				
+				threadList.add(thread);
+				
+				thread.start();
+				
+			} catch (IOException e) {
+
+				System.err.println("SERVIDOR >>> No ha podido conectarse al cliente...");
+			}
 		}
 	}
 
+	/**
+	 * Populates the list serverChannelNames with chanel names
+	 * @return List with the available channels
+	 */
 	private static List<Channel> getChannelList() {
 		
 		List<Channel> serverChannelNames = new ArrayList<Channel>();
@@ -70,12 +90,16 @@ public class Server {
 			
 			String[] channelNameSplit = channelName.split("-");
 			
-			serverChannelNames.add(new Channel(channelNameSplit[0],channelNameSplit[1]));
+			serverChannelNames.add(new Channel(channelNameSplit[0]));
 		}
 		
 		return serverChannelNames;
 	}
 
+	/**
+	 * Reads the channels contained inside the file  channels.txt
+	 * @return List of read channel names
+	 */
 	private static List<String> getChannelNames() {
 		
 		List<String> channelList = null;
@@ -91,19 +115,12 @@ public class Server {
 		
 		return channelList;
 	}
-
-	private static List<String> getChannelListNumbers() {
-		
-		List<String> channelNumberList = new ArrayList<String>();;
-		
-		for (String channel : channelNames) {
-			
-			channelNumberList.add(channel.substring(0, 1));
-		}
-		
-		return channelNumberList;
-	}
 	
+	/**
+	 * Returns true if the provided input is a valid command
+	 * @param nextInput Input to check if it is a command
+	 * @return If the provided message is identified as a valid command
+	 */
 	public static boolean isCommand(String nextInput) {
 		
 		for (String command : commandList) {
@@ -117,6 +134,10 @@ public class Server {
 		return false;
 	}
 	
+	/**
+	 * Obtains the current date and time in hours and minutes returning it
+	 * @return String with current date and time
+	 */
 	public static String getTimestamp() {
 		
 		return (LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + ": ");

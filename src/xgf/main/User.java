@@ -3,12 +3,14 @@ package xgf.main;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+/**
+ * @author Xavi
+ */
 public class User {
 
 	private String name;
 	private Socket socket;
 	private ObjectOutputStream objectOutputStream;
-	//private Thread thread;
 	
 	public User(String name, Socket socket, ObjectOutputStream objectOutputStream) {
 		super();

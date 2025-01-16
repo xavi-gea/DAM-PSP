@@ -2,11 +2,12 @@ package xgf.main;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 
+/**
+ * @author Xavi
+ */
 public class ClientAux implements Runnable {
 	
 	private BufferedReader bufferedReader;
@@ -24,6 +25,9 @@ public class ClientAux implements Runnable {
 		this.objectInputStream = objectInputStream2;
 	}
 
+	/**
+	 * Listen for inputs provided by the server. Either from another user or this client user
+	 */
 	@Override
 	public void run() {
 		
@@ -46,10 +50,11 @@ public class ClientAux implements Runnable {
 			
 		} catch (Exception e) {
 			
-			e.printStackTrace();
 			return;
+			
+		}finally {
+			
+			System.exit(0);
 		}
-		
-		//System.exit(0);
 	}
 }

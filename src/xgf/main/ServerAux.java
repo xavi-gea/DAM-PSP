@@ -8,12 +8,13 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.List;
 
+/**
+ * @author Xavi
+ */
 public class ServerAux implements Runnable {
 
 	private Socket clientSocket;
-	private List<Thread> threadList;
 	
 	private InputStream inputStream;
 	private InputStreamReader inputStreamReader;
@@ -28,10 +29,9 @@ public class ServerAux implements Runnable {
 	
 	private User clientUser;
 
-	public ServerAux(Socket clientSocket, List<Thread> threadList) {
+	public ServerAux(Socket clientSocket) {
 		
 		this.clientSocket = clientSocket;
-		this.threadList = threadList;
 	}
 
 	@Override
@@ -49,7 +49,8 @@ public class ServerAux implements Runnable {
 			
 		} catch (IOException e) {
 			
-			return;
+			System.err.println("SERVIDOR >>> No ha podido configurarse la conexión con el cliente");
+			System.exit(0);
 		}
 		
 		printWriter.println(Channel.getServerChannelList());
@@ -64,7 +65,7 @@ public class ServerAux implements Runnable {
 			
 		} catch (IOException e) {
 			
-			System.err.println("SERVIDOR >>> El usuario nuevo se ha desconectado");
+			System.err.println("SERVIDOR >>> Usuario desconectado antes de elegir nombre y canal");
 			
 			try {
 				
@@ -94,13 +95,13 @@ public class ServerAux implements Runnable {
 			
 		} finally {
 		
-			Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
-			
 			try {
+			
+				Channel.getServerChannel(chosenChannel).getUsers().remove(clientUser);
 				
 				clientSocket.close();
 				
-			} catch (IOException e) {
+			} catch (Exception e) {
 				
 				return;
 			}
@@ -163,12 +164,12 @@ public class ServerAux implements Runnable {
 				
 			}else {
 				
-				writeToChannelUsers(nextInput, Channel.getServerChannel(chosenChannel));
+				writeToUsersInChannel(nextInput, Channel.getServerChannel(chosenChannel));
 			}
 		}
 	}
 
-	private void writeToChannelUsers(String message, Channel channel) throws IOException {
+	private void writeToUsersInChannel(String message, Channel channel) throws IOException {
 		
 		for (User user : channel.getUsers()) {
 				
@@ -186,12 +187,6 @@ public class ServerAux implements Runnable {
 					userPrintWriter.println(Server.getTimestamp() + chosenUser + " >>> " + message);
 					
 				}else {
-					
-					// string format?
-					
-//					String formatString = "%s(canal%d, %d) >>> %d";
-//					
-//					userPrintWriter.println(String.format(formatString, Server.getTimestamp(), channel.getId(), chosenUser,message));
 					
 					userPrintWriter.println(Server.getTimestamp() + "(canal" + channel.getId() + ", " + chosenUser + ") >>> " + message);
 				}
@@ -215,10 +210,6 @@ public class ServerAux implements Runnable {
 			
 			printWriter.println(Channel.getServerChannelList());
 			
-		}else if(nextInput.startsWith("exit")) {
-			
-			return;
-		
 		}else if(nextInput.startsWith("@canal") && nextInput.length() > 8) {
 			
 			String targetChannel = Character.toString(nextInput.charAt(6));
@@ -227,7 +218,7 @@ public class ServerAux implements Runnable {
 				
 				String message = nextInput.substring(8);
 				
-				writeToChannelUsers(message, Channel.getServerChannel(targetChannel));
+				writeToUsersInChannel(message, Channel.getServerChannel(targetChannel));
 			}
 		}
 	}
