@@ -188,7 +188,7 @@ public class ServerAux implements Runnable {
 					
 				}else {
 					
-					userPrintWriter.println(Server.getTimestamp() + "(canal" + channel.getId() + ", " + chosenUser + ") >>> " + message);
+					userPrintWriter.println(Server.getTimestamp() + "(canal" + chosenChannel + ", " + chosenUser + ") >>> " + message);
 				}
 			}
 		}
