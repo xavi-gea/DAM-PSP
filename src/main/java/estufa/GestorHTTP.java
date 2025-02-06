@@ -21,12 +21,20 @@ public class GestorHTTP implements HttpHandler{
 		
 		if (requestMethod.equals("GET")) {
 			
-			handleGetResponse(exchange, handleGetRequest(exchange));	
+			handleGetResponse(exchange, handleGetRequest(exchange));
+			
+		}else if (requestMethod.equals("POST")) {
+			
+			try {
+				
+				handlePostResponse(exchange, handlePostRequest(exchange));
+				
+			} catch (InterruptedException e) {
+				
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-//		}else if (requestMethod.equals("POST")) {
-//			
-//			handlePostResponse(exchange, handlePostRequest(exchange));
-//		}
 		
 	}
 
@@ -48,6 +56,7 @@ public class GestorHTTP implements HttpHandler{
 			htmlResponse += "<body>";
 			
 			// WARNING, NO PASAR º
+			// utilizar html &ordm
 			
 			htmlResponse += "<p>";
 			htmlResponse += "Temperatura Actual: " + temperaturaActual + "&ordm";
@@ -60,8 +69,6 @@ public class GestorHTTP implements HttpHandler{
 			htmlResponse += "</body>";
 			htmlResponse += "</html>";
 			
-			System.out.println(htmlResponse);
-			
 			exchange.sendResponseHeaders(200, htmlResponse.length());
 			
 			outputStream.write(htmlResponse.getBytes());
@@ -69,38 +76,68 @@ public class GestorHTTP implements HttpHandler{
 			outputStream.flush();
 			outputStream.close();
 		}
-		
-
-		
 	}
 	
-	private String handlePostRequest(HttpExchange exchange) throws IOException {
+	private boolean handlePostRequest(HttpExchange exchange) throws IOException, InterruptedException {
 		
 		InputStream inputStream = exchange.getRequestBody();
 		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 		
-		String postString = "";
-		
 		while (reader.ready()) {
 			
-			postString += reader.readLine() + "\n";
+			String[] instruction = reader.readLine().split("=");
+			
+			if (instruction[0].equals("setTemperatura")) {
+
+				temperaturaTermostato = Integer.parseInt(instruction[1]);
+				
+				regularTemperatura();
+				
+				return true;
+			}
 		}
 		
-		return postString;
+		return false;
 	}
 
-	private void handlePostResponse(HttpExchange exchange, String requestParam) throws IOException {
+	private void handlePostResponse(HttpExchange exchange, boolean requestSuccessful) throws IOException {
 		
 		OutputStream outputStream = exchange.getResponseBody();
 		
-		String htmlResponse = "Post request response";
+		String htmlResponse = "";
 		
-		exchange.sendResponseHeaders(201, htmlResponse.length());
+		if (requestSuccessful) {
+			
+			exchange.sendResponseHeaders(204, -1);
+			
+		}else {
+			
+			htmlResponse = "Error. Temperature not changed";
+			
+			exchange.sendResponseHeaders(400, htmlResponse.length());
+		}
 		
 		outputStream.write(htmlResponse.getBytes());
 		
 		outputStream.flush();
 		outputStream.close();
+	}
+	
+	private void regularTemperatura() throws InterruptedException {
+		
+		while (temperaturaActual != temperaturaTermostato) {
+			
+			Thread.sleep(5000);
+			
+			if (temperaturaActual < temperaturaTermostato) {
+				
+				temperaturaActual++;
+				
+			}else {
+				
+				temperaturaActual--;
+			}
+		}
 	}
 }
