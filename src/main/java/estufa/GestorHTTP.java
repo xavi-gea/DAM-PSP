@@ -35,9 +35,7 @@ public class GestorHTTP implements HttpHandler{
 				e.printStackTrace();
 			}
 		}
-		
 	}
-
 	
 	private String handleGetRequest(HttpExchange exchange) {
 		
@@ -46,14 +44,14 @@ public class GestorHTTP implements HttpHandler{
 
 	private void handleGetResponse(HttpExchange exchange, String requestParam) throws IOException {
 		
+		OutputStream outputStream = exchange.getResponseBody();
+		
+		String htmlResponse = "<html>";
+		htmlResponse += "<body>";
+		
 		if (requestParam.equals("temperaturaActual")) {
 			
-			OutputStream outputStream = exchange.getResponseBody();
-			
 			//String htmlResponse = "<html><body>Hello " + requestParam + "</body></html>";
-			
-			String htmlResponse = "<html>";
-			htmlResponse += "<body>";
 			
 			// WARNING, NO PASAR º
 			// utilizar html &ordm
@@ -71,11 +69,20 @@ public class GestorHTTP implements HttpHandler{
 			
 			exchange.sendResponseHeaders(200, htmlResponse.length());
 			
-			outputStream.write(htmlResponse.getBytes());
+		}else {
 			
-			outputStream.flush();
-			outputStream.close();
+			htmlResponse += "<h1>400</h1>";
+			htmlResponse += "<p>";
+			htmlResponse += "Bad Request";
+			htmlResponse += "</p>";
+		
+			exchange.sendResponseHeaders(400, htmlResponse.length());
 		}
+		
+		outputStream.write(htmlResponse.getBytes());
+		
+		outputStream.flush();
+		outputStream.close();
 	}
 	
 	private boolean handlePostRequest(HttpExchange exchange) throws IOException, InterruptedException {
