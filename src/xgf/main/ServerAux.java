@@ -108,6 +108,12 @@ public class ServerAux implements Runnable {
 		}
 	}
 
+	/**
+	 * Constantly expects a channel until it confirms that it is valid
+	 * Expect the channel with bufferedReader.readLine()
+	 * Sends the validation result to the client with objectOutputStream.writeBoolean(chosenChannelExists)
+	 * @throws IOException If the communication with the client returns an error
+	 */
 	private void getChannel() throws IOException {
 		
 		chosenChannel = "";
@@ -126,6 +132,12 @@ public class ServerAux implements Runnable {
 		} while (!chosenChannelExists);
 	}
 
+	/**
+	 * Constantly expects a user name until it confirms that it is valid
+	 * Expect the user with bufferedReader.readLine()
+	 * Sends the validation result to the client with objectOutputStream.writeBoolean(chosenUserExists)
+	 * @throws IOException If the communication with the client returns an error
+	 */
 	private void getUser() throws IOException {
 		
 		chosenUser = "";
@@ -143,6 +155,14 @@ public class ServerAux implements Runnable {
 		} while (chosenUserExists);
 	}
 
+	/**
+	 * Constantly expects input from the client until it reads "exit" or connection ends
+	 * Expect the input with bufferedReader.readLine()
+	 * Sends back what the client wrote
+	 * Checks if the input contains a valid command and invoke it
+	 * If not, send the input to the rest of the clients that are in the same channel
+	 * @throws IOException If the communication with the client returns an error
+	 */
 	private void getinput() throws IOException {
 		
 		String nextInput = "";
@@ -169,6 +189,13 @@ public class ServerAux implements Runnable {
 		}
 	}
 
+	
+	/**
+	 * Write the provided message to every user in a channel avoiding the user that originally sent it 
+	 * @param message message to be sent
+	 * @param channel channel to compare
+	 * @throws IOException If the communication with the client returns an error
+	 */
 	private void writeToUsersInChannel(String message, Channel channel) throws IOException {
 		
 		for (User user : channel.getUsers()) {
@@ -194,6 +221,11 @@ public class ServerAux implements Runnable {
 		}
 	}
 
+	/**
+	 * With the provided command, verify which it is and return relevant content
+	 * @param nextInput Input to be checked
+	 * @throws IOException If the communication with the client returns an error
+	 */
 	private void invokeCommand(String nextInput) throws IOException {
 		
 		if (nextInput.startsWith("whois")) {
