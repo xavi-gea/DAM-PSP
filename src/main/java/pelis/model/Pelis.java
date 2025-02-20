@@ -193,5 +193,18 @@ public class Pelis {
 		return false;
 	}
 
-	
+	public boolean removeFilm(String filmID) {
+		
+		boolean filmDeleted = false;
+		
+		File film = new File(pelisLocation + File.separator + filmID + ".txt");
+		
+		if (film.exists()) {
+			
+			film.delete();
+			filmDeleted = true;
+		}
+		
+		return filmDeleted;
+	}
 }
